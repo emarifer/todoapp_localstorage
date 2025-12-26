@@ -152,28 +152,37 @@ fn set_localstorage(_key: String, _value: String) -> Nil {
 // VIEW ------------------------------------------------------------------------
 
 fn view(model: Model) -> Element(Msg) {
-  html.div([attribute.class("mx-auto w-full max-w-2xl space-y-8 p-32")], [
-    html.h1([attribute.class("text-2xl font-semibold")], [html.text("Todo:")]),
-    //
-    keyed.ul([attribute.class("flex flex-col gap-2")], {
-      list.map(model.todos, fn(item) {
-        let key = int.to_string(item.id)
-        let html =
-          html.li([], [
-            // `UserToggledTodo` in a captured function,
-            // which also returns a generic `msg` message
-            // because `set_todos` returns `Effect(msg)`. ↓↓↓
-            view_todo(item:, on_complete: UserToggledTodo(item.id, _)),
-          ])
+  html.div(
+    [attribute.class("mx-auto max-w-xs space-y-8 p-12 sm:max-w-2xl sm:p-32")],
+    [
+      html.h1([attribute.class("text-2xl font-semibold")], [html.text("Todo:")]),
+      //
+      keyed.ul(
+        [
+          attribute.class("scroller flex max-h-80"),
+          attribute.class("flex-col gap-2 overflow-y-auto"),
+        ],
+        {
+          list.map(model.todos, fn(item) {
+            let key = int.to_string(item.id)
+            let html =
+              html.li([], [
+                // `UserToggledTodo` in a captured function,
+                // which also returns a generic `msg` message
+                // because `set_todos` returns `Effect(msg)`. ↓↓↓
+                view_todo(item:, on_complete: UserToggledTodo(item.id, _)),
+              ])
 
-        #(key, html)
-      })
-    }),
-    // 
-    html.hr([]),
-    view_input(on_submit: UserCreatedTodo),
-    get_credits(),
-  ])
+            #(key, html)
+          })
+        },
+      ),
+      // 
+      html.hr([]),
+      view_input(on_submit: UserCreatedTodo),
+      get_credits(),
+    ],
+  )
 }
 
 fn view_todo(
@@ -232,8 +241,11 @@ fn view_input(
     ]),
     html.div([attribute.class("flex items-center gap-2")], [
       html.input([
-        attribute.class("flex-1 rounded border border-slate-300 px-2 py-1"),
+        attribute.class(
+          "w-full rounded border border-slate-300 px-2 py-1 sm:flex-1",
+        ),
         attribute.class("focus:border-blue-500 focus:outline-none"),
+        attribute.type_("search"),
         attribute.id("title"),
         attribute.name("title"),
         attribute.required(True),
