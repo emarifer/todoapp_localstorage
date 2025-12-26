@@ -27,6 +27,9 @@ jobs:
         run: gleam deps download
       - name: Build app
         run: gleam run -m lustre/dev build todoapp_localstorage --minify --outdir=dist
+      - name: Fixing Links
+        run: |
+          sed -i -e 's|href="/todoapp_localstorage.css"|href="./todoapp_localstorage.css"|g; s|src="/todoapp_localstorage.js"|src="./todoapp_localstorage.js"|g; s|href="/images/logo.png"|href="./images/logo.png"|g' dist/index.html
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
