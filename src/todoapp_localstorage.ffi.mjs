@@ -28,13 +28,10 @@ export function get_year() {
    return new Date().getFullYear().toString();
 }
 
-export function remove_todos() {   
-    const result = confirm("Are you sure you want to eliminate everything you have to do?");
+export function show_confirm() {
+   return confirm("Are you sure you want to eliminate everything you have to do?");
+}
 
-    if (result === true) {
-        window.localStorage.clear();
-        return true;
-    }
-
-    return false; 
+export function remove_todos() {
+    window.localStorage.clear();
 }

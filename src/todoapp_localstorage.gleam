@@ -50,6 +50,8 @@ type Msg {
   UserToggledTodo(id: Int, completed: Bool)
   UserCreatedTodo(Result(String, Nil))
   UserClickedRemoveAll
+  UserNotConfirmedDeletion
+  UserConfirmedDeletion
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -90,12 +92,11 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
       #(Model(todos:, next_id:), set_todos(todos))
     }
 
-    UserClickedRemoveAll -> {
-      case remove_todos() {
-        True -> #(Model(todos: [], next_id: 0), effect.none())
-        False -> #(model, effect.none())
-      }
-    }
+    UserClickedRemoveAll -> #(model, show_dialog())
+
+    UserNotConfirmedDeletion -> #(model, effect.none())
+
+    UserConfirmedDeletion -> #(Model(todos: [], next_id: 0), delete_all())
   }
 }
 
@@ -159,9 +160,33 @@ fn set_localstorage(_key: String, _value: String) -> Nil {
   Nil
 }
 
-@external(javascript, "./todoapp_localstorage.ffi.mjs", "remove_todos")
-pub fn remove_todos() -> Bool {
+fn show_dialog() -> Effect(Msg) {
+  use dispatch <- effect.from
+
+  case show_confirm() {
+    True -> dispatch(UserConfirmedDeletion)
+    False -> dispatch(UserNotConfirmedDeletion)
+  }
+}
+
+@external(javascript, "./todoapp_localstorage.ffi.mjs", "show_confirm")
+pub fn show_confirm() -> Bool {
   False
+}
+
+// Not all effects will dispatch messages. Just like element's
+// that dont dispatch events, it's good practice to annotate
+// these effects using a generic `msg`
+// type so they can be used in any context.
+fn delete_all() -> Effect(msg) {
+  use _ <- effect.from
+
+  remove_todos()
+}
+
+@external(javascript, "./todoapp_localstorage.ffi.mjs", "remove_todos")
+pub fn remove_todos() -> Nil {
+  Nil
 }
 
 // VIEW ------------------------------------------------------------------------
