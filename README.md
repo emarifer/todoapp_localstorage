@@ -1,24 +1,33 @@
-# todoapp_localstorage
+<div align="center">
 
-[![Package Version](https://img.shields.io/hexpm/v/todoapp_localstorage)](https://hex.pm/packages/todoapp_localstorage)
-[![Hex Docs](https://img.shields.io/badge/hex-docs-ffaff3)](https://hexdocs.pm/todoapp_localstorage/)
+## lustre_gleam_todoapp_localstorage
 
-```sh
-gleam add todoapp_localstorage@1
-```
-```gleam
-import todoapp_localstorage
+<p style="margin-bottom: 16px;">
+    Simple todolist application with storage in LocalStorage written in Gleam with the Lustre framework
+</p>
 
-pub fn main() -> Nil {
-  // TODO: An example of the project in use
-}
-```
+<br />
 
-Further documentation can be found at <https://hexdocs.pm/todoapp_localstorage>.
+![GitHub License](https://img.shields.io/github/license/emarifer/todoapp_localstorage) ![Static Badge](https://img.shields.io/badge/Gleam-%3E=1.13.0-ffaff3) ![Static Badge](https://img.shields.io/badge/Lustre%20framework-%3E=5.4.0-ffaff3) ![Static Badge](https://img.shields.io/badge/Erlang/OTP-%3E=27-B83998)
 
-## Development
+</div>
 
-```sh
-gleam run   # Run the project
-gleam test  # Run the tests
-```
+---
+
+> 🚧 This is a work in progress and therefore you should expect that the
+> application may not have all the features at this moment.
+
+---
+
+### 📚 Learn more
+
+* Official website: https://gleam.run/
+* Guides: https://hexdocs.pm/gleam_stdlib/index.html
+* Lustre framework: https://hexdocs.pm/lustre/index.html
+* Lustre Dev Tools: https://hexdocs.pm/lustre_dev_tools/index.html
+* Community: https://discord.com/invite/Fm8Pwmy
+* Gleam discussions on Github: https://github.com/gleam-lang/gleam/discussions
+
+---
+
+### Happy coding 😀!!
