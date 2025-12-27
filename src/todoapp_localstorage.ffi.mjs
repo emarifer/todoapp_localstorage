@@ -24,7 +24,17 @@ export function set_localstorage(key, json) {
     window.localStorage.setItem(key, json);
 }
 
-
 export function get_year() {
    return new Date().getFullYear().toString();
+}
+
+export function remove_todos() {   
+    const result = confirm("Are you sure you want to eliminate everything you have to do?");
+
+    if (result === true) {
+        window.localStorage.clear();
+        return true;
+    }
+
+    return false; 
 }

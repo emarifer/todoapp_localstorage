@@ -49,6 +49,7 @@ type Msg {
   LocalStorageReturnedTodos(Result(List(Todo), Nil))
   UserToggledTodo(id: Int, completed: Bool)
   UserCreatedTodo(Result(String, Nil))
+  UserClickedRemoveAll
 }
 
 fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
@@ -81,10 +82,19 @@ fn update(model: Model, msg: Msg) -> #(Model, Effect(Msg)) {
     UserCreatedTodo(Error(_)) -> #(model, effect.none())
 
     UserCreatedTodo(Ok(title)) -> {
-      let todos = list.append(model.todos, [Todo(model.next_id, title, False)])
+      // let todos = list.append(model.todos, [Todo(model.next_id, title, False)])
+      // prepend instead of adding at the end
+      let todos = [Todo(model.next_id, title, False), ..model.todos]
       let next_id = model.next_id + 1
 
       #(Model(todos:, next_id:), set_todos(todos))
+    }
+
+    UserClickedRemoveAll -> {
+      case remove_todos() {
+        True -> #(Model(todos: [], next_id: 0), effect.none())
+        False -> #(model, effect.none())
+      }
     }
   }
 }
@@ -149,13 +159,35 @@ fn set_localstorage(_key: String, _value: String) -> Nil {
   Nil
 }
 
+@external(javascript, "./todoapp_localstorage.ffi.mjs", "remove_todos")
+pub fn remove_todos() -> Bool {
+  False
+}
+
 // VIEW ------------------------------------------------------------------------
 
 fn view(model: Model) -> Element(Msg) {
   html.div(
-    [attribute.class("mx-auto max-w-xs space-y-8 p-12 sm:max-w-2xl sm:p-32")],
     [
-      html.h1([attribute.class("text-2xl font-semibold")], [html.text("Todo:")]),
+      attribute.class("mx-auto max-w-xs space-y-5 p-12"),
+      attribute.class("sm:max-w-2xl sm:space-y-8 sm:p-32"),
+    ],
+    [
+      html.div(
+        [
+          attribute.class("flex w-full items-center"),
+          attribute.class("justify-between border-b pb-1.5"),
+        ],
+        [
+          html.h1([attribute.class("w-fit text-2xl font-semibold")], [
+            html.text("Todo:"),
+          ]),
+          html.img([
+            attribute.class("block h-8 w-8"),
+            attribute.src("./images/logo.png"),
+          ]),
+        ],
+      ),
       //
       keyed.ul(
         [
@@ -163,23 +195,51 @@ fn view(model: Model) -> Element(Msg) {
           attribute.class("flex-col gap-2 overflow-y-auto"),
         ],
         {
-          list.map(model.todos, fn(item) {
-            let key = int.to_string(item.id)
-            let html =
-              html.li([], [
-                // `UserToggledTodo` in a captured function,
-                // which also returns a generic `msg` message
-                // because `set_todos` returns `Effect(msg)`. ↓↓↓
-                view_todo(item:, on_complete: UserToggledTodo(item.id, _)),
-              ])
+          case model.todos {
+            [] -> [
+              #(
+                "nothing",
+                html.li(
+                  [
+                    attribute.class("text-center text-xs"),
+                    attribute.class("font-semibold text-lime-500"),
+                  ],
+                  [html.text("You have nothing to do yet")],
+                ),
+              ),
+            ]
+            _ ->
+              list.map(model.todos, fn(item) {
+                let key = int.to_string(item.id)
+                let html =
+                  html.li([], [
+                    // `UserToggledTodo` in a captured function,
+                    // which also returns a generic `msg` message
+                    // because `set_todos` returns `Effect(msg)`. ↓↓↓
+                    view_todo(item:, on_complete: UserToggledTodo(item.id, _)),
+                  ])
 
-            #(key, html)
-          })
+                #(key, html)
+              })
+          }
         },
       ),
       // 
       html.hr([]),
       view_input(on_submit: UserCreatedTodo),
+      // 
+      html.div([attribute.class("flex justify-start")], [
+        html.button(
+          [
+            attribute.class("bg-error cursor-pointer"),
+            attribute.class("rounded hover:brightness-150"),
+            attribute.class("px-2 py-1 text-sm sm:px-4 sm:text-base"),
+            event.on_click(UserClickedRemoveAll),
+          ],
+          [html.text("Delete All")],
+        ),
+      ]),
+      // 
       get_credits(),
     ],
   )
@@ -189,24 +249,28 @@ fn view_todo(
   item item: Todo,
   on_complete handle_complete: fn(Bool) -> msg,
 ) -> Element(msg) {
-  html.label([attribute.class("flex cursor-pointer items-center gap-2")], [
-    html.p(
-      [
-        attribute.class("flex-1"),
-        attribute.classes([#("line-through text-slate-400", item.completed)]),
-      ],
-      [html.text(item.title)],
-    ),
-    // https://stackoverflow.com/questions/72226003/how-to-change-the-background-color-of-unchecked-checkbox
-    html.input([
-      attribute.class("not-checked:appearance-none size-5 accent-green-500"),
-      attribute.class("bg-neutral cursor-pointer"),
-      attribute.class("rounded-md border border-slate-500"),
-      attribute.type_("checkbox"),
-      attribute.checked(item.completed),
-      event.on_check(handle_complete),
-    ]),
-  ])
+  html.label(
+    [attribute.class("flex cursor-pointer items-center justify-between gap-2")],
+    [
+      html.p(
+        [
+          attribute.class("max-w-[18ch] truncate sm:max-w-[30ch]"),
+          attribute.classes([#("line-through text-slate-400", item.completed)]),
+          attribute.title(item.title),
+        ],
+        [html.text(item.title)],
+      ),
+      // https://stackoverflow.com/questions/72226003/how-to-change-the-background-color-of-unchecked-checkbox
+      html.input([
+        attribute.class("not-checked:appearance-none size-5 accent-green-500"),
+        attribute.class("bg-neutral cursor-pointer"),
+        attribute.class("rounded-md border border-slate-500"),
+        attribute.type_("checkbox"),
+        attribute.checked(item.completed),
+        event.on_check(handle_complete),
+      ]),
+    ],
+  )
 }
 
 // This function returns an `Element(msg)` (with the generic argument `msg`),
@@ -239,20 +303,26 @@ fn view_input(
     html.label([attribute.for("title"), attribute.class("mb-2 block text-sm")], [
       html.text("What do you need to do?"),
     ]),
-    html.div([attribute.class("flex items-center gap-2")], [
+    html.div([attribute.class("flex items-center gap-2 text-sm sm:text-base")], [
       html.input([
-        attribute.class(
-          "w-full rounded border border-slate-300 px-2 py-1 sm:flex-1",
-        ),
+        attribute.class("w-full rounded border border-slate-300"),
+        attribute.class("px-1 py-1 sm:flex-1 sm:px-2"),
         attribute.class("focus:border-blue-500 focus:outline-none"),
         attribute.type_("search"),
         attribute.id("title"),
         attribute.name("title"),
         attribute.required(True),
       ]),
-      html.button([attribute.class("bg-primary rounded px-4 py-1")], [
-        html.text("Add"),
-      ]),
+      html.button(
+        [
+          attribute.class("bg-primary cursor-pointer"),
+          attribute.class("rounded hover:brightness-125"),
+          attribute.class("px-2 py-1 text-sm sm:px-4 sm:text-base"),
+        ],
+        [
+          html.text("Add"),
+        ],
+      ),
     ]),
   ])
 }
