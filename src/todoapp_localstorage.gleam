@@ -181,11 +181,11 @@ pub fn show_confirm() -> Bool {
 fn delete_all() -> Effect(msg) {
   use _ <- effect.from
 
-  remove_todos()
+  remove_todos("todos")
 }
 
 @external(javascript, "./todoapp_localstorage.ffi.mjs", "remove_todos")
-pub fn remove_todos() -> Nil {
+pub fn remove_todos(_key: String) -> Nil {
   Nil
 }
 

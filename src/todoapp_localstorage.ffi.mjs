@@ -32,6 +32,6 @@ export function show_confirm() {
    return confirm("Are you sure you want to eliminate everything you have to do?");
 }
 
-export function remove_todos() {
-    window.localStorage.clear();
+export function remove_todos(key) {
+    window.localStorage.removeItem(key);
 }
